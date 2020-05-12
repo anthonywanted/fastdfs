@@ -44,3 +44,7 @@ Client test code use client library please refer to the directory: client/test.
 
 For more FastDFS related articles, please subscribe the Wechat/Weixin public account
 (Chinese Language): fastdfs
+
+fastdfs branch 6.0.6 在tracker增加备份服务器的配置
+在上传的策略选择RoundRobin（store_server=0）时，可以控制上传文件的轮询不命中备份服务器，在非备份服务器之间轮询
+同时，下载策略选择从文件上传的源服务器下载（download_server=1），可以实现上传和下载均不命中备份服务器，下载的负载均衡依赖上传时的RoundRobin
