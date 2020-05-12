@@ -129,6 +129,12 @@
 #define FDFS_MULTI_IP_INDEX_INNER   	0   //inner ip index
 #define FDFS_MULTI_IP_INDEX_OUTER   	1   //outer ip index
 #define FDFS_MULTI_IP_MAX_COUNT      	2
+#define BACKUP_STORAGE_MAX_COUNT        100 // add by anthony.huang
+#define BACKUP_PORT_MAX_LENGTH          6  // add by anthony.huang  6 for ":port" - port's length < 6
+	
+int backup_storage_server_count; // add by anthony.huang
+char* backup_storage_servers; // add by anthony.huang: define backup storages, upload file(round robin) will skip these servers unless all other server is down
+char backup_storage_server[BACKUP_STORAGE_MAX_COUNT][IP_ADDRESS_SIZE + BACKUP_PORT_MAX_LENGTH];
 
 typedef struct
 {

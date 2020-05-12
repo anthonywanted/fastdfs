@@ -93,7 +93,7 @@ static int tracker_load_store_lookup(const char *filename, \
 			__LINE__, filename, g_groups.store_group);
 		return EINVAL;
 	}
-
+    
 	return 0;
 }
 
@@ -121,6 +121,19 @@ static int tracker_load_storage_id_info(const char *config_filename, \
 	}
 
 	return fdfs_load_storage_ids_from_file(config_filename, pItemContext);
+}
+
+int backup_storage_server_split(char dst[][IP_ADDRESS_SIZE + BACKUP_PORT_MAX_LENGTH], char* str, const char* spl)
+{
+    int n = 0;
+    char *result = NULL;
+    result = strtok(str, spl);
+    while( result != NULL )
+    {
+        strcpy(dst[n++], result);
+        result = strtok(NULL, spl);
+    }
+    return n;
 }
 
 int tracker_load_from_conf_file(const char *filename, \
@@ -169,6 +182,7 @@ int tracker_load_from_conf_file(const char *filename, \
 
 	do
 	{
+        
 		if (iniGetBoolValue(NULL, "disabled", &iniContext, false))
 		{
 			logError("file: "__FILE__", line: %d, " \
@@ -296,7 +310,17 @@ int tracker_load_from_conf_file(const char *filename, \
 				FDFS_STORE_PATH_ROUND_ROBIN);
 			g_groups.store_path = FDFS_STORE_PATH_ROUND_ROBIN;
 		}
-
+        
+        // add by anthony.huang
+        backup_storage_servers = iniGetStrValue(NULL, "backup_storage_server", &iniContext);
+        backup_storage_server_count = backup_storage_server_split(backup_storage_server, backup_storage_servers, ",");
+        int iLoop;
+        for (iLoop = 0; iLoop < backup_storage_server_count; iLoop++)
+        {
+            logInfo("file: "__FILE__", line: %d, backup_storage_server[%d]: %s", __LINE__, iLoop, backup_storage_server[iLoop]);
+        }
+        // add by anthony.huang end
+        
 		if ((result=fdfs_parse_storage_reserved_space(&iniContext, \
 				&g_storage_reserved_space)) != 0)
 		{
@@ -878,4 +902,3 @@ int tracker_load_from_conf_file(const char *filename, \
 
 	return result;
 }
-

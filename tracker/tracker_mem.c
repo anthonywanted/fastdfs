@@ -5578,18 +5578,52 @@ FDFSStorageDetail *tracker_get_writable_storage(FDFSGroupInfo *pStoreGroup)
 	int write_server_index;
 	if (g_groups.store_server == FDFS_STORE_SERVER_ROUND_ROBIN)
 	{
-		write_server_index = pStoreGroup->current_write_server++;
-		if (pStoreGroup->current_write_server >= \
-				pStoreGroup->active_count)
-		{
-			pStoreGroup->current_write_server = 0;
-		}
+        // modify by anthony.huang
+        int max_try_count = backup_storage_server_count + 1; // try backup_storage_server_count + 1 times
+        int try_count = 0;
+        FDFSStorageDetail* selectedStorage = NULL;
+        while(try_count++ < max_try_count)
+        {
+            write_server_index = pStoreGroup->current_write_server++;
+            if (pStoreGroup->current_write_server >= \
+                    pStoreGroup->active_count)
+            {
+                pStoreGroup->current_write_server = 0;
+            }
 
-		if (write_server_index >= pStoreGroup->active_count)
-		{
-			write_server_index = 0;
-		}
-		return  *(pStoreGroup->active_servers + write_server_index);
+            if (write_server_index >= pStoreGroup->active_count)
+            {
+                write_server_index = 0;
+            }
+            
+            selectedStorage = *(pStoreGroup->active_servers + write_server_index);
+            int storageIpCount = selectedStorage->ip_addrs.count;
+            int iLoop;
+            if (backup_storage_server_count == 0)
+                return selectedStorage;
+            for (iLoop = 0; iLoop < storageIpCount; iLoop++)
+            {
+                int jLoop;
+                int match = 0;
+                for (jLoop = 0; jLoop < backup_storage_server_count; jLoop++)
+                {
+                    if (strcmp(selectedStorage->ip_addrs.ips[iLoop].address, backup_storage_server[jLoop]) == 0) 
+                    {
+                        match = 1;
+                        break;
+                    }
+                }
+                if (match)
+                {
+                    break;
+                }
+                else
+                {
+                    return selectedStorage;
+                }
+            }
+        }
+		return selectedStorage;
 	}
 	else //use the first server
 	{
