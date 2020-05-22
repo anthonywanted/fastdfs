@@ -5575,20 +5575,21 @@ int tracker_mem_offline_store_server(FDFSGroupInfo *pGroup, \
 
 FDFSStorageDetail *tracker_get_writable_storage(FDFSGroupInfo *pStoreGroup)
 {
-	int write_server_index;
+	int write_server_index = 0;
 	if (g_groups.store_server == FDFS_STORE_SERVER_ROUND_ROBIN)
 	{
         // modify by anthony.huang
         int max_try_count = backup_storage_server_count + 1; // try backup_storage_server_count + 1 times
         int try_count = 0;
         FDFSStorageDetail* selectedStorage = NULL;
+        int current_write_server = pStoreGroup->current_write_server;
         while(try_count++ < max_try_count)
         {
-            write_server_index = pStoreGroup->current_write_server++;
+            write_server_index = ++current_write_server;
             if (pStoreGroup->current_write_server >= \
                     pStoreGroup->active_count)
             {
-                pStoreGroup->current_write_server = 0;
+                current_write_server = 0;
             }
 
             if (write_server_index >= pStoreGroup->active_count)
@@ -5600,7 +5601,10 @@ FDFSStorageDetail *tracker_get_writable_storage(FDFSGroupInfo *pStoreGroup)
             int storageIpCount = selectedStorage->ip_addrs.count;
             int iLoop;
             if (backup_storage_server_count == 0)
+            {
+                pStoreGroup->current_write_server = write_server_index;
                 return selectedStorage;
+            }
             for (iLoop = 0; iLoop < storageIpCount; iLoop++)
             {
                 int jLoop;
@@ -5619,10 +5623,12 @@ FDFSStorageDetail *tracker_get_writable_storage(FDFSGroupInfo *pStoreGroup)
                 }
                 else
                 {
+                    pStoreGroup->current_write_server = write_server_index;
                     return selectedStorage;
                 }
             }
         }
+        pStoreGroup->current_write_server = write_server_index;
 		return selectedStorage;
 	}
 	else //use the first server
